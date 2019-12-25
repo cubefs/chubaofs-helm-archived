@@ -8,21 +8,62 @@ ChubaoFS is a distributed file system for cloud native applications. This chart 
 ## Pre Requestes
 
 - Kubernetes 1.16+
+- Helm 3
 
 ## Add ChubaoFS Helm Chart repository
 
 ```
-$ helm repo add chubaofs https://chubaofs.github.io/chubaofs-charts
+$ helm repo add chubaofs https://chubaofs.github.io/chubaofs-charts 
 $ helm repo update
 ```
 
-### Configure and install chart 
+### Create configuration yaml file
 
-The configuration detail refer to [README.md](https://github.com/chubaofs/chubaofs-helm) .
-After successful configuration, you can use this command to install the Chart into your kubernetes cluster
+Create chubaofs.yaml, an put it in a user-defined path. Suppose this is where we put it.
 
 ```
-$ helm install --name=chubaofs chubaofs/chubaofs -f ~/chubaofs.yaml
+$ cat ~/chubaofs.yaml 
 ```
 
+``` yaml
+path:
+  data: /chubaofs/data
+  log: /chubaofs/log
+
+datanode:
+  disks:
+    - device: /dev/sda
+      retain_space: "21474836480"
+    - device: /dev/sdb
+      retain_space: "21474836480"
+      
+metanode:
+  total_mem: "2147483648"
+```
+
+> Note that `chubaofs-helm/chubaofs/values.yaml` shows all the config parameters of ChubaoFS.
+> The parameters `path.data` and `path.log` are used to store server data and logs, respectively.
+
+### Add labels to Kubernetes node
+
+There are 3 roles for ChubaoFS servers, master/metanode/datanode. Tag each Kubernetes node with the appropriate labels accorindly.
+
+```
+kubectl label node <nodename> chuabaofs-master=enabled
+kubectl label node <nodename> chuabaofs-metanode=enabled
+kubectl label node <nodename> chuabaofs-datanode=enabled
+```
+
+### Deploy ChubaoFS cluster
+```
+$ helm install chubaofs chubaofs/chubaofs --version 1.4.1 -f ~/chubaofs.yaml
+```
+
+### Delete ChubaoFS cluster
+```
+$ helm delete chubaofs
+```
+
+## Config Monitoring System (optional)
+The configuration detail refer to [README.md](https://github.com/chubaofs/chubaofs-helm) 
 
